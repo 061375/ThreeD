@@ -12,89 +12,100 @@ class An8
 {
     private $errors = array();
 	
-	private $method = null;
 	
+	/**
+	 * allows a file to be uploaded
+	 * @return array
+	 * */
     public function uploadAn8()
     {
 		$action_result = array();
-			$files = isset($_FILES) ? $_FILES : false;
-			if (false == $files) {
-				$this->set_error_message('No File Uploaded IN An8 :: uploadAn8 ');
-			}
-		if (false == $this->has_error()) {
-			if ($files['file']['size'] < MAX_BYTES) { // make sure the file isn't too big
-			$path = getcwd().'/temp/';
-			if (false == is_dir($path)) {
-				mkdir($path);	// mk
-				chmod($path,777);
-			}   
-			if('application/octet-stream' !== $files['file']['type']) {// deal with the compression type
-				$this->set_error_message('An unrecognized file type was selected IN An8 :: uploadAn8 ');
-			} else {
-				$file = $files['file']['tmp_name'];
-				$newfile = $path.$files['file']['name'];
-				if (!copy($file, $newfile)) {
-				$this->set_error_message("failed to copy $file to $newfile  IN An8 :: uploadAn8");
-				} else {
-				$action_result['result'] = 1;
-				$action_result['file'] = $newfile;
-				}
-			}
-			} else {
-					$this->set_error_message('File size is larger than '.MAXBYTES.' IN An8 :: uploadAn8');
-				}
-				if (false == $this->has_error()) {
-					return $action_result;
-				} else {
-					return 0;
-				}
+		$files = isset($_FILES) ? $_FILES : false;
+		if (false == $files) {
+			$this->set_error_message('No File Uploaded IN An8 :: uploadAn8 ');
+			return false;
 		}
-		return 0;
+		if(strpos($files['file']['name'],'.an8') === false) {
+			$this->set_error_message('Unrecognized file extension IN An8 :: uploadAn8 ');
+			return false;
+		}
+		if(substr($files['file']['name'],strlen($files['file']['name'])-4,4) != '.an8') {
+			$this->set_error_message('Unrecognized file extension IN An8 :: uploadAn8 ');
+			return false;
+		}
+		if ($files['file']['size'] > MAX_BYTES) {
+			// make sure the file isn't too big
+			$this->set_error_message('File size is larger than '.MAXBYTES.' IN An8 :: uploadAn8');
+			return false;
+		}
+		$path = getcwd().'/temp/';
+		if (false == is_dir($path)) {
+			mkdir($path);	// mk
+			chmod($path,777);
+		}   
+		if('application/octet-stream' !== $files['file']['type']) {
+			// deal with the compression type
+			$this->set_error_message('An unrecognized file type was selected IN An8 :: uploadAn8 ');
+			return false;
+		} 
+		$file = $files['file']['tmp_name'];
+		$newfile = $path.$files['file']['name'];
+		if (!copy($file, $newfile)) {
+			$this->set_error_message("failed to copy $file to $newfile  IN An8 :: uploadAn8");
+			return false;
+		}
+		$action_result['result'] = 1;
+		$action_result['file'] = $newfile;
+		return $action_result;
     }
+	/**
+	 * @param string
+	 * @return array
+	 * */
     public function openAn8($filename)
     {
 		$result = array();
 		if (filesize($filename) > MAX_BYTES) {
 			// file too big
 			$this->set_error_message('File too big');
+			return false;
 		}
-		if (false == $this->has_error()) {
-			$handle = @fopen($filename, "r");
-			if (false !== $handle) {
+		$handle = @fopen($filename, "r");
+		if (false !== $handle) {
 			while (($buffer = fgets($handle, 4096)) !== false) {
-						if (true !== $this->fileIsClean($buffer)) {
-							$this->set_error_message('File contains potentially dangerous code!');
-							return false;
-						} else {
-							$result['data'][] = $buffer;
-						}
+				if (true !== $this->fileIsClean($buffer)) {
+					$this->set_error_message('File contains potentially dangerous code!');
+					return false;
+				} else {
+					$result['data'][] = $buffer;
+				}
 			}
 			if (!feof($handle)) {
 				$this->set_error_message('Error: unexpected fgets() fail_');
+				return false;
 			}
 			fclose($handle);
-					unlink($filename);
-			}
-			if (false == isset($result['data'])) {
-			$this->set_error_message('Error: unexpected fgets() fail_');
-			}
-			
-			if (false == $this->has_error()) {
-			$result['result'] = 1;
-			return $result;
-			}
+			unlink($filename);
 		}
-		return 0;
+		if (false == isset($result['data'])) {
+			$this->set_error_message('Error: unexpected fgets() fail_');
+			return false;
+		}
+		return $result;
     }
-    public function prepareAn8($data,$object="object01",$mesh="mesh01")
+	/**
+	 * @param array
+	 * @return array
+	 * */
+    public function prepareAn8($data)
     {
 		$gathering = false;
 		$points = array();
 		$faces = array();
 		if (false == isset($data['data'])) {
-			$this->set_error_message('data has no value IN An8 :: prepareAn8');    
+			$this->set_error_message('data has no value IN An8 :: prepareAn8');
+			return false;
 		}
-		if (false === $this->has_error()) {
 			foreach ($data['data'] as $row) {
 				if (strpos($row,"}") !== false) {
 					$gathering = false;
@@ -117,15 +128,17 @@ class An8
 				}
 				
 			}
-			$model = array(
-					'result' => 1,
-					'faces' => $faces,
-					'points' => $points
-					);
-			return $model;
-		}
-		return 0;
+		$model = array(
+				'result' => 1,
+				'faces' => $faces,
+				'points' => $points
+				);
+		return $model;
     }
+	/**
+	 * @param array
+	 * @return array
+	 * */
     public function get3Dpoints($data)
     {
 		$result = array();;
@@ -148,6 +161,10 @@ class An8
 		} 
 		return $result;
     }
+	/**
+	 * @param array
+	 * @return array
+	 * */
     public function make3Dpoints($data)
     {
 		/*
@@ -189,6 +206,10 @@ class An8
 		$result .="\n];\n";
 		return $result;
     }
+	/**
+	 * @param array
+	 * @return array
+	 * */
     public function get3Dfaces($data)
     {
 		$result = array();
@@ -207,6 +228,10 @@ class An8
 		}
 		return $result;
     }
+	/**
+	 * @param array
+	 * @return array
+	 * */
     public function make3Dfaces($data)
     {
 		/*
@@ -231,6 +256,10 @@ class An8
 		$result .="];\n";
 		return $result;
     }
+	/**
+	 * @param string
+	 * @return boolean
+	 * */
     private function fileIsClean($string)
     {
         if (strpos($string,'eval') !== false) {
@@ -249,17 +278,6 @@ class An8
             return false;
         }
         return true;
-    }
-    public function getAllFiles($dir)
-    {
-        $return = array();
-        if ($handle = opendir($dir)) {
-            while (false !== ($entry = readdir($handle))) {
-                $return[] = $entry;
-            }
-            closedir($handle);
-        }
-        return $return;
     }
     // --------------------------------------------------------------------
 

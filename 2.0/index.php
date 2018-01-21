@@ -8,29 +8,23 @@ $displayModel = false;
 $an8 = new An8();
 if ("upload_an8" == $action) {
     $result = $an8->uploadAn8();
-    if (false !== $result) {
+    if (false === $result)
+		$an8->display_errors();
 		$data = $an8->openAn8($result['file']);
-		if (0 !== $data) {
+		if (false === $data)
+			$an8->display_errors();
 			$result = $an8->prepareAn8($data);
-			if (0 !== $result) {
+			if (false === $result)
+				$an8->display_errors();
 				$points = $an8->get3Dpoints($result);
 				if(false === $points)
 					$an8->display_errors();
-				$points = $an8->make3Dpoints($points);
-				if(false === $points)
-					$an8->display_errors();
-				$faces = $an8->get3Dfaces($result);
-				$faces = $an8->make3Dfaces($faces);
-				$displayModel = true;
-			} else {
-				$an8->display_errors();
-			}
-		} else {
-			$an8->display_errors();
-		}
-    } else {
-		$an8->display_errors();
-    }
+					$points = $an8->make3Dpoints($points);
+					if(false === $points)
+						$an8->display_errors();
+						$faces = $an8->get3Dfaces($result);
+						$faces = $an8->make3Dfaces($faces);
+						$displayModel = true;
 }
 ?>
 <!doctype html>
@@ -48,19 +42,17 @@ if ("upload_an8" == $action) {
             
             $w.gamespeed = 80;
             
-            <?php if (false !== $displayModel) { ?>
-                let i = $w.add_object_single (
-                    1,
-                    Cube,{
-                        w:W,
-                        h:H
-                    },
-                    document.getElementById('target'),
-                    W,H
-                );
-                
-                $w.loop(true,i);
-            <?php } ?>
+			let i = $w.add_object_single (
+				1,
+				Cube,{
+					w:W,
+					h:H
+				},
+				document.getElementById('target'),
+				W,H
+			);
+			
+			$w.loop(true,i);
         }
         /**
          * Cube
@@ -75,6 +67,22 @@ if ("upload_an8" == $action) {
             <?php if (false !== $displayModel) { ?>
             <?php echo $points; ?>
             <?php echo $faces; ?>
+			<?php } else{ ?>
+			// If no model uploaded the tetra is shown by default
+			this.pointsArray = [
+					this.make3DPoint(9.9853,9.9853,9.9853),
+					this.make3DPoint(9.9853,9.9853,-9.9853),
+					this.make3DPoint(0.14684,-9.9853,0),
+					this.make3DPoint(-9.9853,9.9853,9.9853),
+					this.make3DPoint(-9.9853,9.9853,-9.9853)
+			];
+			this.facesArray = [
+				[0,3,2],
+				[1,2,4],
+				[0,2,1],
+				[3,4,2],
+				[0,1,4,3]
+			];
 			<?php } ?>
             this.cubeAxisRotations = this.make3DPoint(0,0,0);
             
@@ -227,10 +235,16 @@ if ("upload_an8" == $action) {
          * @returns {Array}
          * */
         Cube.prototype.rotateCube = function(x,y){
+			// automatically rotate model for demo
+			//this.cubeAxisRotations.x += x;
+			this.cubeAxisRotations.y += y;
+			//
             return this.Transform3DPointsTo2DPoints(this.pointsArray, this.cubeAxisRotations);
         }
         
         // ---------
+		// Begin control functions
+		// ---------
         
         /**
          * rotateModel
@@ -241,11 +255,19 @@ if ("upload_an8" == $action) {
             $w.objects.Cube[0].cubeAxisRotations.y = (-event.screenX) / 400;
             $w.objects.Cube[0].cubeAxisRotations.x = event.screenY / 400;
         }
+		/**
+		 * setZoom
+		 * @param {Number}
+		 * @returns {Void}
+		 * */
 		function setZoom(z) {
 			$w.objects.Cube[0].zOrigin = z;
 		}
     </script>
     <style>
+		body {
+			font-family: Arial;
+		}
         .fltleft {
             width: 48%;
             float: left;
@@ -267,7 +289,9 @@ if ("upload_an8" == $action) {
 		    </div>
 		</form>
         <p>
-            <h2>Import Anim8or 3D Model Using Javascript Ver 2.0</h2>
+            <h2>Import Anim8or 3D Model Using Javascript - Ver 2.0</h2>
+			<h3>Jeremy Heminger</h3>
+			<p><a href="http://www.jeremyheminger.com">www.jeremyheminger.com</a></p>
             <p>
                 I recently was taking a Node.js course and became...side-tracked.
                 <br />
@@ -275,18 +299,28 @@ if ("upload_an8" == $action) {
                 <br />
                 I am a better programmer now and have a better grasp of the math so,...this works considerably better however it still only imports a single mesh.
             </p>
-            <p>
-                I made some modifcations to the PHP file as well.
-            </p>
             <h3>
-                Drag the screen to rotate the model.
+                Drag your mouse over the model to manually rotate it.
             </h3>
 			<p>
 				Zoom <input type="range" id="zoom" min="1" max="20" value="10" onchange="setZoom(this.value)">
 			</p>
             <p>
+				<h3>
+					Upload *.an8 files using the form:
+					<ol>
+						<li>
+							Click "Choose File"
+						</li>
+						<li>
+							Select a file from your local machines file system.
+						</li>
+					</ol>
+				</h3>
                 <h4>
-                    Here are a few sample models fot demonstration purposes.
+                    Here are a few sample models for demonstration purposes.
+					<br />
+					Right-click and Save-As or your browser will simply open them as text files.
                 </h4>
                 <ul>
                     <li>
