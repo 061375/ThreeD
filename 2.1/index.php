@@ -381,22 +381,22 @@ if ("upload_an8" == $action) {
                 </h4>
                 <ul>
                     <li>
-                        <a href="models/cube.an8">Cube</a>
+                        <a href="models/cube.vtx">Cube</a>
                     </li>
                     <li>
-                        <a href="models/tetra.an8">Tetrahedron</a>
+                        <a href="models/tetra.vtx">Tetrahedron</a>
                     </li>
                     <li>
-                        <a href="models/ico.an8">Icosphere</a>
+                        <a href="models/ico.vtx">Icosphere</a>
                     </li>
 					<li>
-                        <a href="models/bird.an8">Anim8or Hello World Bird</a>
+                        <a href="models/bird.vtx">Anim8or Hello World Bird</a>
                     </li>
                     <li>
-                        <a href="models/tank.an8">Battlezone Tank</a>
+                        <a href="models/tank.vtx">Battlezone Tank</a>
                     </li>
 					<li>
-                        <a href="models/utah.an8">The Utah Teapot</a>
+                        <a href="models/utah.vtx">The Utah Teapot</a>
                     </li>
                 </ul>
             </p>
